@@ -1,0 +1,44 @@
+services:
+
+  budget_app:
+    build:
+      context: ./budget_app
+    container_name: budget_app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.budget_app.rule=Host(`${TRAEFIK_DOMAIN_BUDGET_SERVICE}`)"
+      - "traefik.http.routers.budget_app.entrypoints=web"
+    #      - "traefik.http.routers.portfolio_website.tls.certresolver=myresolver" # Use Let's Encrypt
+    ports:
+      - ${TRAEFIK_BUDGET_SERVICE_PORT-1234}
+    environment:
+      - TRAEFIK_BUDGET_SERVICE_PORT=${TRAEFIK_BUDGET_SERVICE_PORT-1234}
+    volumes:
+      - ./budget_app:/app # Optional: Mount app code for development
+    command: ["npm", "run", "start"]
+    networks:
+      - public
+      - internal
+
+  redis:
+    image: redis:latest
+    container_name: redis-container
+    ports:
+      - "6379"
+    volumes:
+      - redis-data:/data  # Persists Redis data to a volume
+    restart: unless-stopped  # Automatically restart the container unless explicitly stopped
+    networks:
+      - internal
+
+volumes:
+  redis-data:  # Define the volume for persistent Redis data
+
+
+networks:
+  public:
+    driver: bridge
+
+  internal:
+    driver: bridge
+    internal: true  # Restricts this network to internal Docker communication
